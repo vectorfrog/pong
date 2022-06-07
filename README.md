@@ -1,14 +1,16 @@
-# Getting Started
+# Basic Love2d Structure
 
-First, confirm that you have love running on your machine by entering the following in your terminal:
+The Love2d library provides several other callback functions that we can utilize to build our game.  We've already used the love.draw callback, which draws objects to the application screen.  Now let's dive into the love.load callback which is executed only once during the initial load of the application.  Let's add it to our main.lua file, above the love.draw function and use it to create our welcome screen.
 
-```bash
-$ love --version
+```lua
+function love.load()
+  font = love.graphics.newFont("assets/Teko-Bold.ttf")
+  game_title = love.graphics.newText(font, "Pong", 48)
+end
 ```
 
-If the love version is printed out, then we are good to go.
+You'll notice that we are loading a font file.  You can download the file [here](https://fonts.google.com/specimen/Teko), and unzip it and move the Teko-Bold.ttf into a new assets directory in our project directory.  This is something that the `love.load` function is frequently used for, loading in the different assets that the game is going to use.  In this case, we're loading the font, and setting the text.
 
-Next, we're going to explore the barebones of love2d's functionality.  Create a main.lua file with the following:
 
 ```lua
 function love.draw()
