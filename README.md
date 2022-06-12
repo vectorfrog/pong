@@ -1,6 +1,6 @@
-# Text Obects
+# Inheritence
 
-If we want to display text, we know that we are going to need to do the following things:
+Now that we can create text objects and place them on the screen easily, it would be nice if every object that we work on had that same functionality, not just text objects.  We're in luck.  Lua allows us to do this by using metatables.
 
 1. select a font and a size
 2. provide a string
@@ -10,9 +10,11 @@ It would be nice if we could organize our code so that all of the information re
 
 **text.lua**
 ```lua
-require "position"
-text = {}
+local object = require "object"
+
+local text = {}
 text.__index = text
+setmetatable(text, object)
 
 --x and y are optional
 function text.new(string, font_location, font_size, x, y)
@@ -32,42 +34,46 @@ function text:draw()
   love.graphics.draw(self.string, self.x, self.y)
 end
 
-function text:center_screen()
-  self.x, self.y = position.center(self.w, self.h)
+return text
+```
+
+At the top of the file, you'll notice that we're requiring the object.lua file, and that we've added some additional lines after we declare the text table.  First, we've added `text.__index = text`. The `__index` property of a table states that there is some type of inheritence going on, so if a property isn't found, we should look for a metatable that the table can fall back on.  We specify what should be used as the metatable in `setmetatable(text, object)` line, where we basically are saying, if a property can't be found in the text table, look for it in the object table.
+
+Let's take a look at the object table:
+
+**object.lua**
+```lua
+local object = {}
+object.__index = object
+
+function object:center_screen()
+  local win_w, win_h = love.graphics.getDimensions()
+  local center_x = win_w / 2
+  local center_y = win_h / 2
+  local half_w = self.w / 2
+  local half_h = self.h / 2
+  self.x = center_x - half_w
+  self.y = center_y - half_h
 end
 
--- expects table with w and x
-function text:align_center(target)
+-- target: object
+function object:align_x_center(target)
   self.x = target.x + (target.w/2) - (self.w/2)
 end
 
-return text
+function object:between_bottom(target)
+  local win_h = love.graphics.getHeight()
+  local target_bottom = target.y + target.h
+  local mid = (win_h - target_bottom)/2 + target_bottom
+  self.y = mid - (self.h/2)
+end
 
+function object:up(pixels)
+  self.y = self.y - pixels
+end
+
+return object
 ```
 
-So in this file, we're creating a new table called text, and then in that table, we have a function called new which will store all the information regarding the string we are going to print to the screen.  We also have a functions called draw which draws the text object to the screen, as well as some positioning functions (center_screen, which places the object in the center of the screen, and align_center which aligns the text objects vertical axis with another text object).
-
-Now we can simplify our main.lua:
-
-**main.lua**
-```lua
-require "text"
-
-function love.load()
-  pong = text.new("PONG", "assets/Teko-Bold.ttf", 48)
-  enter = text.new("press enter", "assets/Teko-Bold.ttf", 18, 200, 200)
-  pong:center_screen()
-  enter:align_center(pong)
-end
-
-function love.update(dt)
-end
-
-function love.draw()
-  pong:draw()
-  enter:draw()
-end
-```
-
-Notice how easy it is to create new text objects in the main.lua file.  We created the enter object and placed it directly above the Pong text object.
+Here we're doing the same thing, we create the object table, and state that the table has a `__index` property of itself, but now we don't specify a metatable to fall back to, because we're not inheriting any additional properties.  We then have a a few functions that specify how to place an object on the screen.  We'll continue to add functionality to this object table as needed.
 
