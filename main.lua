@@ -1,14 +1,16 @@
-require "position"
+require "text"
 
 function love.load()
-  local font = love.graphics.newFont("assets/Teko-Bold.ttf", 48)
-  game_title = love.graphics.newText(font, "Ping Pong is so FUN!!")
-  w, h = game_title:getDimensions()
+  pong = text.new("PONG", "assets/Teko-Bold.ttf", 48)
+  enter = text.new("press enter", "assets/Teko-Bold.ttf", 18, 200, 200)
+  pong:center_screen()
+  enter:align_center(pong)
 end
 
 function love.update(dt)
 end
 
 function love.draw()
-  love.graphics.draw(game_title, position:center(w,h))
+  pong:draw()
+  enter:draw()
 end
