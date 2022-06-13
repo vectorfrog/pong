@@ -1,79 +1,50 @@
-# Inheritence
+# Game State
 
-Now that we can create text objects and place them on the screen easily, it would be nice if every object that we work on had that same functionality, not just text objects.  We're in luck.  Lua allows us to do this by using metatables.
+Well, we now have a welcome screen for our users, and we have a basic object that we can build on top of.  Our next step is to actually build the game.  When it comes to our game design, our user is going to encounter different experiences at different times.  I find it helpful to map the user experiences during the game:
 
-1. select a font and a size
-2. provide a string
-3. draw to the screen at a given x,y coordinates
+1. User sees the welcome screen.  The user can hit enter to start the game
+2. The game starts, the score is 0-0, the ball starts at the center of the screen and randomly is shot in a direction
+3. The ball can bounce off of the top and bottom of the screen or the players paddles, the players can control their paddles up and down
+4. If the ball passes a player's paddle and exits the screen, the opponent get's a point
+5. The point loser begins the next rally by serving the ball
+6. The game ends when a player scores 5 points
 
-It would be nice if we could organize our code so that all of the information regarding text was stored in a single place, then we could reuse that code again and again whenever we needed to display text.  Making your code reusable is called "abstraction," and it almost always leads to code easier to maintain and to debug.  Let's go ahead and abstract all of our code about creating text to display on the screen into a different lua file, just like we did for positioning logic.
+Now that we've mapped out the basic game, a few different contexts arise.  First, there's the title screen that we already built, then there's the game start, where the ball is randomly fired in a direction, then there is the rally play, then there is a point scored, then there is the serve to start the next rally, and finally, there is the end of the game when a player scores 5 points.  In each of the different scenarios, the user will be able to accomplish different actions (such as starting the game, moving the paddle, or serving the ball).  We need to keep track of where the user is during the game experience, we call this managing game state.
 
-**text.lua**
+Let's start setting up our game state:
+
+**main.lua**
 ```lua
-local object = require "object"
+local text = require "text"
 
-local text = {}
-text.__index = text
-setmetatable(text, object)
-
---x and y are optional
-function text.new(string, font_location, font_size, x, y)
-  local instance = setmetatable({}, text)
-  instance.string = love.graphics.newText(
-    love.graphics.newFont(font_location, font_size),
-    string
-  )
-  instance.w = instance.string:getWidth()
-  instance.h = instance.string:getHeight()
-  instance.x = x or 0
-  instance.y = y or 0
-  return instance
+function love.load()
+  game_state = "start_screen"
+  pong = text.new("PONG", "assets/Teko-Bold.ttf", 48)
+  enter = text.new("press enter", "assets/Teko-Bold.ttf", 18)
+  pong:center_screen()
+  enter:align_x_center(pong)
+  enter:between_bottom(pong)
+  enter:up(30)
 end
 
-function text:draw()
-  love.graphics.draw(self.string, self.x, self.y)
+function love.update(dt)
+  if game_state == "start_screen" then
+    if love.keyboard.isDown("return") then
+      game_state = "game_start"
+    end
+  end
 end
 
-return text
+function love.draw()
+  if game_state == "start_screen" then
+    pong:draw()
+    enter:draw()
+  end
+  if game_state == "game_start" then
+    text.new("game has started", "assets/Teko-Bold.ttf", 24):draw()
+  end
+end
 ```
 
-At the top of the file, you'll notice that we're requiring the object.lua file, and that we've added some additional lines after we declare the text table.  First, we've added `text.__index = text`. The `__index` property of a table states that there is some type of inheritence going on, so if a property isn't found, we should look for a metatable that the table can fall back on.  We specify what should be used as the metatable in `setmetatable(text, object)` line, where we basically are saying, if a property can't be found in the text table, look for it in the object table.
-
-Let's take a look at the object table:
-
-**object.lua**
-```lua
-local object = {}
-object.__index = object
-
-function object:center_screen()
-  local win_w, win_h = love.graphics.getDimensions()
-  local center_x = win_w / 2
-  local center_y = win_h / 2
-  local half_w = self.w / 2
-  local half_h = self.h / 2
-  self.x = center_x - half_w
-  self.y = center_y - half_h
-end
-
--- target: object
-function object:align_x_center(target)
-  self.x = target.x + (target.w/2) - (self.w/2)
-end
-
-function object:between_bottom(target)
-  local win_h = love.graphics.getHeight()
-  local target_bottom = target.y + target.h
-  local mid = (win_h - target_bottom)/2 + target_bottom
-  self.y = mid - (self.h/2)
-end
-
-function object:up(pixels)
-  self.y = self.y - pixels
-end
-
-return object
-```
-
-Here we're doing the same thing, we create the object table, and state that the table has a `__index` property of itself, but now we don't specify a metatable to fall back to, because we're not inheriting any additional properties.  We then have a a few functions that specify how to place an object on the screen.  We'll continue to add functionality to this object table as needed.
+So there's a couple of new items, first, we've added the `game_state` variable which tells us where the user is at in the game.  Next, we've added some logic to `love.update` function where it now will change the state from "start_screen" to "game_start" if the user hits the return button.  Finally, we've udpated the `love.draw` function to display different stuff depending on the state.  Awesome!
 
