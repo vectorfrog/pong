@@ -1,21 +1,11 @@
-# Game State
+# Creating the Ball
 
-Well, we now have a welcome screen for our users, and we have a basic object that we can build on top of.  Our next step is to actually build the game.  When it comes to our game design, our user is going to encounter different experiences at different times.  I find it helpful to map the user experiences during the game:
-
-1. User sees the welcome screen.  The user can hit enter to start the game
-2. The game starts, the score is 0-0, the ball starts at the center of the screen and randomly is shot in a direction
-3. The ball can bounce off of the top and bottom of the screen or the players paddles, the players can control their paddles up and down
-4. If the ball passes a player's paddle and exits the screen, the opponent get's a point
-5. The point loser begins the next rally by serving the ball
-6. The game ends when a player scores 5 points
-
-Now that we've mapped out the basic game, a few different contexts arise.  First, there's the title screen that we already built, then there's the game start, where the ball is randomly fired in a direction, then there is the rally play, then there is a point scored, then there is the serve to start the next rally, and finally, there is the end of the game when a player scores 5 points.  In each of the different scenarios, the user will be able to accomplish different actions (such as starting the game, moving the paddle, or serving the ball).  We need to keep track of where the user is during the game experience, we call this managing game state.
-
-Let's start setting up our game state:
+Looking back at what's supposed to happen at the start of the game, we should have the ball in the center of the screen and it shoots in a random direction. So let's make that happen now. The ball is going to have an x,y access, and we're going to need to draw it to the screen, so it's a great candidate to be built off of the object metatable we created earlier.  However, it also is going to be moving around the screen, so it's more than just an object.  Let's create a new ball.lua file to contain all of the logic that the ball will need during our game.
 
 **main.lua**
 ```lua
 local text = require "text"
+local ball_object = require "ball"
 
 function love.load()
   game_state = "start_screen"
@@ -25,6 +15,8 @@ function love.load()
   enter:align_x_center(pong)
   enter:between_bottom(pong)
   enter:up(30)
+  ball = ball_object.new(1, 1, 1, 5)
+  ball:center_screen()
 end
 
 function love.update(dt)
@@ -41,10 +33,47 @@ function love.draw()
     enter:draw()
   end
   if game_state == "game_start" then
-    text.new("game has started", "assets/Teko-Bold.ttf", 24):draw()
+    ball:draw()
   end
 end
 ```
 
-So there's a couple of new items, first, we've added the `game_state` variable which tells us where the user is at in the game.  Next, we've added some logic to `love.update` function where it now will change the state from "start_screen" to "game_start" if the user hits the return button.  Finally, we've udpated the `love.draw` function to display different stuff depending on the state.  Awesome!
+At the top of the file, we've added a require to bring the ball.lua file into our app.  I've named it `ball_object` so we can use the `ball` as the instance name.  In the `love.load` function, we instantiate the ball and pass the rgb colors and radius of the ball, and then we center the ball on the screen using the same `center_screen` function from the object model.  Let's take a look at the new ball.lua file
 
+**ball.lua**
+```lua
+local object = require "object"
+
+local ball = {}
+ball.__index = ball
+setmetatable(ball, object)
+
+function ball.new(r, g, b, rad, x, y)
+  local instance = setmetatable({}, ball)
+  instance.r = r or 1
+  instance.g = g or 1
+  instance.b = b or 1
+  instance.rad = rad or 1
+  instance.x = x or 1
+  instance.y = y or 1
+  instance.w = rad * 2
+  instance.h = rad * 2
+  return instance
+end
+
+function ball:draw()
+  love.graphics.setColor(self.r, self.g, self.b)
+  love.graphics.circle("fill", self.x, self.y, self.rad)
+end
+
+return ball
+
+```
+
+The top of the file should look pretty familiar.  Again, we're using the object table as the meta table, which will provide the object functions to our `ball` objects.  The `ball.new` function is where we create the instance of the ball object.  Here is where we set the rgb colors, and the radius.  We also derive the width and height from the radius.  Finally, we create a draw function that will draw the circle to the screen.
+
+When we fire up the application, we see the start screen, and then when we hit enter, we see the ball in the center of the screen.  Nice, now we need to build the paddles.
+
+You can read up on the `love.graphics.circle` function here:
+
+[love.graphics.circle](https://love2d.org/wiki/love.graphics.circle) 

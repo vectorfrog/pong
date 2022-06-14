@@ -1,4 +1,5 @@
 local text = require "text"
+local ball_object = require "ball"
 
 function love.load()
   game_state = "start_screen"
@@ -8,6 +9,8 @@ function love.load()
   enter:align_x_center(pong)
   enter:between_bottom(pong)
   enter:up(30)
+  ball = ball_object.new(1, 1, 1, 5)
+  ball:center_screen()
 end
 
 function love.update(dt)
@@ -24,6 +27,6 @@ function love.draw()
     enter:draw()
   end
   if game_state == "game_start" then
-    text.new("game has started", "assets/Teko-Bold.ttf", 24):draw()
+    ball:draw()
   end
 end
