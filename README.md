@@ -1,11 +1,12 @@
-# Creating the Ball
+# Starting the Game
 
-Looking back at what's supposed to happen at the start of the game, we should have the ball in the center of the screen and it shoots in a random direction. So let's make that happen now. The ball is going to have an x,y access, and we're going to need to draw it to the screen, so it's a great candidate to be built off of the object metatable we created earlier.  However, it also is going to be moving around the screen, so it's more than just an object.  Let's create a new ball.lua file to contain all of the logic that the ball will need during our game.
+Now we need our game to actually do something.  So when the user starts the game, let's have the ball fire in a random direction.
 
 **main.lua**
 ```lua
 local text = require "text"
 local ball_object = require "ball"
+local paddle = require "paddle"
 
 function love.load()
   game_state = "start_screen"
@@ -17,6 +18,12 @@ function love.load()
   enter:up(30)
   ball = ball_object.new(1, 1, 1, 5)
   ball:center_screen()
+  player1 = paddle.new(20, 100)
+  player1:center_y_screen()
+  player2 = paddle.new(20, 100)
+  player2:align_left_screen(0)
+  player2:center_y_screen()
+  player2:align_right_screen(0)
 end
 
 function love.update(dt)
@@ -24,6 +31,16 @@ function love.update(dt)
     if love.keyboard.isDown("return") then
       game_state = "game_start"
     end
+  end
+  if game_state == "game_start" then
+    math.randomseed(os.time())
+    local dx = math.random(-250, 250)
+    local dy = math.random(-250, 250)
+    ball:setDirection(dx, dy)
+    game_state = "play"
+  end
+  if game_state == "play" then
+    ball:move(dt)
   end
 end
 
@@ -34,11 +51,18 @@ function love.draw()
   end
   if game_state == "game_start" then
     ball:draw()
+    player1:draw()
+    player2:draw()
+  end
+  if game_state == "play" then
+    ball:draw()
+    player1:draw()
+    player2:draw()
   end
 end
 ```
 
-At the top of the file, we've added a require to bring the ball.lua file into our app.  I've named it `ball_object` so we can use the `ball` as the instance name.  In the `love.load` function, we instantiate the ball and pass the rgb colors and radius of the ball, and then we center the ball on the screen using the same `center_screen` function from the object model.  Let's take a look at the new ball.lua file
+The `love.load` function hasn't changed at all.  However, in the love.update, we've added some logic to take a random value between -250 and 250 and set those values as the ball's direction.  Then, we change the state to play, and call if the state is play, we run the `ball:move` function.  Let's take a look at the new ball functionality.
 
 **ball.lua**
 ```lua
@@ -66,14 +90,26 @@ function ball:draw()
   love.graphics.circle("fill", self.x, self.y, self.rad)
 end
 
+function ball:setDirection(dx, dy)
+  self.dx = dx
+  self.dy = dy
+end
+
+function ball:move(dt)
+  self.x = self.x + self.dx * dt
+  self.y = self.y + self.dy * dt
+end
+
 return ball
 
 ```
 
-The top of the file should look pretty familiar.  Again, we're using the object table as the meta table, which will provide the object functions to our `ball` objects.  The `ball.new` function is where we create the instance of the ball object.  Here is where we set the rgb colors, and the radius.  We also derive the width and height from the radius.  Finally, we create a draw function that will draw the circle to the screen.
+The new `ball:setDirection` simply sets the dx and dy properties on the ball object.  The `ball:move` takes the dt (delta time, which means the amount of time since the `love.update` function was last called, and then multiplies that dt value against the dx and dy properties and sets the x and y value of the ball accordingly.
 
-When we fire up the application, we see the start screen, and then when we hit enter, we see the ball in the center of the screen.  Nice, now we need to build the paddles.
+When we run the app using `loverun .`, we see the start screen, then we hit enter and the ball moves in a random direction.  However, there's nothing keeping the ball from moving very slowly sometimes, and it's possible that the ball moves only vertically, which means the ball would never get to a paddle.  Our next step will be to set some parameters around how the ball should move to keep the speed consistent, and always moving toward a paddle.
 
-You can read up on the `love.graphics.circle` function here:
+You can read up more about the functions used at:
 
-[love.graphics.circle](https://love2d.org/wiki/love.graphics.circle) 
+[math.randomseed](http://lua-users.org/wiki/MathLibraryTutorial) 
+[love.update](https://love2d.org/wiki/love.update) 
+

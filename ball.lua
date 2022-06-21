@@ -22,5 +22,15 @@ function ball:draw()
   love.graphics.circle("fill", self.x, self.y, self.rad)
 end
 
+function ball:setDirection(dx, dy)
+  self.dx = dx
+  self.dy = dy
+end
+
+function ball:move(dt)
+  self.x = self.x + self.dx * dt
+  self.y = self.y + self.dy * dt
+end
+
 return ball
 
