@@ -218,4 +218,3 @@ return object
 ```
 
 The `object:is_collision` function takes a single parameter (which should also be an object...or a table that is using the object table as a metatable).  Remember, `self` is referring to the object that has called this function, and `obj` is another object that we are checking against.  The goal here is to determine if the two objects are overlapping at all.  To do this, we'll compare `self` top left corner (the x property), to the `obj`'s top right corner (x property plus it's width).  We'll do a similar comparison for each corner.  If any of the comparisons are false, then we know there is no collision, however, if they are all true, then that means there has to be a collision.  This comparison between 4 corners is a common practice in game development, to the point that it has it's own name, **hitboxes**.
-
