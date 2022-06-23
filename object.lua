@@ -66,4 +66,11 @@ function object:up(pixels)
   self.y = self.y - pixels
 end
 
+function object:is_collision(obj)
+  return self.x < obj.x + obj.w and
+         obj.x < self.x + self.w and
+         self.y < obj.y + obj.h and
+         obj.y < self.y + self.h
+end
+
 return object

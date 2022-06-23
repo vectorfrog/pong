@@ -1,6 +1,7 @@
 local text = require "text"
 local ball_object = require "ball"
 local paddle = require "paddle"
+local ball_speed = 700
 
 function love.load()
   game_state = "start_screen"
@@ -10,12 +11,11 @@ function love.load()
   enter:align_x_center(pong)
   enter:between_bottom(pong)
   enter:up(30)
-  ball = ball_object.new(1, 1, 1, 5)
+  ball = ball_object.new(1, 1, 1, 5, 0, 0, ball_speed)
   ball:center_screen()
   player1 = paddle.new(20, 100)
   player1:center_y_screen()
   player2 = paddle.new(20, 100)
-  player2:align_left_screen(0)
   player2:center_y_screen()
   player2:align_right_screen(0)
 end
@@ -27,14 +27,14 @@ function love.update(dt)
     end
   end
   if game_state == "game_start" then
-    math.randomseed(os.time())
-    local dx = math.random(-250, 250)
-    local dy = math.random(-250, 250)
-    ball:setDirection(dx, dy)
+    ball:start()
     game_state = "play"
   end
   if game_state == "play" then
     ball:move(dt)
+    if ball:is_collision(player1) or ball:is_collision(player2) then
+      ball:paddle_bounce()
+    end
   end
 end
 
@@ -49,7 +49,6 @@ function love.draw()
     player2:draw()
   end
   if game_state == "play" then
-    -- love.graphics.print(ball.dx, 100, 100)
     ball:draw()
     player1:draw()
     player2:draw()
