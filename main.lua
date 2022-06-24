@@ -2,6 +2,7 @@ local text = require "text"
 local ball_object = require "ball"
 local paddle = require "paddle"
 local ball_speed = 700
+local paddle_speed = 700
 
 function love.load()
   game_state = "start_screen"
@@ -13,7 +14,7 @@ function love.load()
   enter:up(30)
   ball = ball_object.new(1, 1, 1, 5, 0, 0, ball_speed)
   ball:center_screen()
-  player1 = paddle.new(20, 100)
+  player1 = paddle.new(20, 100, paddle_speed)
   player1:center_y_screen()
   player2 = paddle.new(20, 100)
   player2:center_y_screen()
@@ -32,6 +33,7 @@ function love.update(dt)
   end
   if game_state == "play" then
     ball:move(dt)
+    player1:move(dt)
     if ball:is_collision(player1) or ball:is_collision(player2) then
       ball:paddle_bounce()
     end

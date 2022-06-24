@@ -66,6 +66,18 @@ function object:up(pixels)
   self.y = self.y - pixels
 end
 
+function object:down(pixels)
+  self.y = self.y + pixels
+end
+
+function object:can_move_up()
+  return self.y > 0
+end
+
+function object:can_move_down()
+  return self.y + self.h < love.graphics.getHeight()
+end
+
 function object:is_collision(obj)
   return self.x < obj.x + obj.w and
          obj.x < self.x + self.w and

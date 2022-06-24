@@ -36,20 +36,25 @@ function ball:start()
   ball:setDirection(dx, dy)
 end
 
-function ball:is_off_screen()
-  return self.y < 0 or (self.y + self.h) > love.graphics.getHeight()
-end
-
 function ball:vert_bounce()
-  if self:is_off_screen() then
     self.dy = self.dy * -1
-  end
 end
 
 function ball:move(dt)
   self.x = self.x + self.dx * dt
-  self.y = self.y + self.dy * dt
-  self:vert_bounce()
+  if self.dy < 0 then
+    if self:can_move_up() then
+      self.y = self.y + self.dy * dt
+    else
+      self:vert_bounce()
+    end
+  else
+    if self:can_move_down() then
+      self.y = self.y + self.dy * dt
+    else
+      self:vert_bounce()
+    end
+  end
 end
 
 function ball:paddle_bounce()
