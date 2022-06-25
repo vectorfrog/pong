@@ -61,5 +61,17 @@ function ball:paddle_bounce()
   self.dx = self.dx * -1
 end
 
+function ball:is_point(score)
+  if (self.x + self.w) < 0 then
+    score.player2 = score.player2 + 1
+    return true
+  end
+  if self.x > love.graphics.getWidth() then
+    score.player1 = score.player1 + 1
+    return true
+  end
+  return false
+end
+
 return ball
 
