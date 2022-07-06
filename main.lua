@@ -1,9 +1,10 @@
 local text = require "text"
 local ball_object = require "ball"
 local paddle = require "paddle"
+local grid_object = require "grid"
 local ball_speed = 700
 local paddle_speed = 700
-local score = {player1 = 0, player2 = 0}
+local global_should_show = 1
 
 function love.load()
   game_state = "start_screen"
@@ -17,6 +18,22 @@ function love.load()
   player1 = paddle.new(20, 100, paddle_speed)
   player2 = paddle.new(20, 100)
   player2:align_right_screen(0)
+  score = {player1 = 0, player2 = 0}
+  player1_score = text.new(score.player1, "assets/Teko-Bold.ttf", 128)
+  player2_score = text.new(score.player2, "assets/Teko-Bold.ttf", 128)
+  grid = grid_object.new(1,2)
+  player1_score:align_center(grid[1])
+  player2_score:align_center(grid[2])
+end
+
+function should_show_score(dt)
+  global_should_show = global_should_show - dt
+  if global_should_show < 0 then
+    global_should_show = 1
+    return false
+  else
+    return true
+  end
 end
 
 function love.update(dt)
@@ -30,7 +47,12 @@ function love.update(dt)
     ball:start()
     player1:center_y_screen()
     player2:center_y_screen()
-    game_state = "play"
+    if should_show_score(dt) then
+      show_score = true
+    else
+      show_score = false
+      game_state = "play"
+    end
   end
   if game_state == "play" then
     ball:move(dt)
@@ -39,6 +61,8 @@ function love.update(dt)
       ball:paddle_bounce()
     end
     if ball:is_point(score) then
+      player1_score:update_string(score.player1)
+      player2_score:update_string(score.player2)
       game_state = "game_start"
     end
   end
@@ -50,6 +74,10 @@ function love.draw()
     enter:draw()
   end
   if game_state == "game_start" then
+    if show_score then
+      player1_score:draw()
+      player2_score:draw()
+    end
     ball:draw()
     player1:draw()
     player2:draw()

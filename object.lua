@@ -8,6 +8,17 @@ local object = {
 }
 object.__index = object
 
+function object.new(x,y,w,h,dx,dy)
+  local instance = setmetatable({}, object)
+  instance.x = x or 0
+  instance.y = y or 0
+  instance.w = w or 0
+  instance.h = h or 0
+  instance.dx = dx or 0
+  instance.dy = dy or 0
+  return instance
+end
+
 function object:center_screen()
   self:center_x_screen()
   self:center_y_screen()
@@ -27,12 +38,17 @@ function object:center_y_screen()
   self.y = center_y - half_h
 end
 
-function object:align_x_center(target)
-  self.x = target.x + (target.w/2) - (self.w/2)
+function object:align_center(target)
+  self:align_x_center(target)
+  self:align_y_center(target)
 end
 
 function object:align_x_center(target)
   self.x = target.x + (target.w/2) - (self.w/2)
+end
+
+function object:align_y_center(target)
+  self.y = target.y + (target.h/2) - (self.h/2)
 end
 
 function object:align_right_screen(offset)

@@ -1,35 +1,18 @@
-# Scoring
+# Display Scoring
 
-You've probably noticed that our game gets pretty boring as soon as the ball passes a paddle, because we don't have any logic indicating when a point is scored and that the game should reset with a new serve.  Let's change that now.
+OK, so we are keeping score, but the users have no idea what the score is, we need to figure out a way to display the scoring to them.  I think the expected behavior would be to have the score be shown to the user before the start of each point.  However, we'll want the score to be visible for a second or so before the game moves on, so we're going to have to figure out how to work with time so we show the score for a given amount of time before the game moves on to the play state.
 
-In our ball.lua file, we're going to add a function that will detect if the ball is off the screen on the horizontal access.
-**ball.lua**
-```lua
-function ball:is_point(score)
-  if (self.x + self.w) < 0 then
-    score.player2 = score.player2 + 1
-    return true
-  end
-  if self.x > love.graphics.getWidth() then
-    score.player1 = score.player1 + 1
-    return true
-  end
-  return false
-end
-```
-
-The function also accepts a `score` parameter.  That parameter is meant to be a table that we create in the main file and will hold player1 and player2's scores.
-
-In the main.lua file, we're going to add the score check in the `love.update` function:
+To do that, we'll introduce a new variable called `seconds_score_shown` which will contain the number of seconds that the score should show.  Next we'll create a function that will determine whether the score should be shown called `should_show_score` and that will return a true of false value. In that function we'll subtract the `dt` value from the `love.update` function which provides the number of seconds since the last time the love.update function was called, if the value is less than 0, then we're reset the `seconds_score_shown` to 1 and return false.  We then can can change the `game_state` to play and the game begins.
 
 **main.lua**
 ```lua
 local text = require "text"
 local ball_object = require "ball"
 local paddle = require "paddle"
+local grid_object = require "grid"
 local ball_speed = 700
 local paddle_speed = 700
-local score = {player1 = 0, player2 = 0}
+local seconds_score_shown = 1
 
 function love.load()
   game_state = "start_screen"
@@ -43,6 +26,22 @@ function love.load()
   player1 = paddle.new(20, 100, paddle_speed)
   player2 = paddle.new(20, 100)
   player2:align_right_screen(0)
+  score = {player1 = 0, player2 = 0}
+  player1_score = text.new(score.player1, "assets/Teko-Bold.ttf", 128)
+  player2_score = text.new(score.player2, "assets/Teko-Bold.ttf", 128)
+  grid = grid_object.new(1,2)
+  player1_score:align_center(grid[1])
+  player2_score:align_center(grid[2])
+end
+
+function should_show_score(dt)
+  seconds_score_shown = seconds_score_shown - dt
+  if seconds_score_shown < 0 then
+    seconds_score_shown = 1
+    return false
+  else
+    return true
+  end
 end
 
 function love.update(dt)
@@ -56,7 +55,12 @@ function love.update(dt)
     ball:start()
     player1:center_y_screen()
     player2:center_y_screen()
-    game_state = "play"
+    if should_show_score(dt) then
+      show_score = true
+    else
+      show_score = false
+      game_state = "play"
+    end
   end
   if game_state == "play" then
     ball:move(dt)
@@ -65,6 +69,8 @@ function love.update(dt)
       ball:paddle_bounce()
     end
     if ball:is_point(score) then
+      player1_score:update_string(score.player1)
+      player2_score:update_string(score.player2)
       game_state = "game_start"
     end
   end
@@ -76,6 +82,10 @@ function love.draw()
     enter:draw()
   end
   if game_state == "game_start" then
+    if show_score then
+      player1_score:draw()
+      player2_score:draw()
+    end
     ball:draw()
     player1:draw()
     player2:draw()
@@ -87,8 +97,4 @@ function love.draw()
   end
 end
 ```
-
-We created a new table called `score` which has to properties, player\_1 and player\_2, and declare when the app is loaded that each player has 0 points.
-
-You'll also noticed that we moved the initial player1 & player2 `center_y_screen` functions calls to the `love.update` function when the game state is equal to "game\_start".  Now the paddles will be recentered after each point.
 
